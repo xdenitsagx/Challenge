@@ -3,6 +3,8 @@
 // However, you must not change the surface API presented from this file,
 // and you should not need to change any other files in the project to complete the challenge
 
+import React from "react";
+
 type UseCachingFetch = (url: string) => {
   isLoading: boolean;
   data: unknown;
@@ -28,14 +30,39 @@ type UseCachingFetch = (url: string) => {
  * 4. This file passes a type-check.
  *
  */
+const cache = new Map<string, { data?: unknown; error?: Error }>();
+
 export const useCachingFetch: UseCachingFetch = (url) => {
-  return {
+  const [state, setState] = React.useState<{
+    isLoading: boolean;
+    data: unknown;
+    error: Error | null;
+  }>({
+    isLoading: true,
     data: null,
-    isLoading: false,
-    error: new Error(
-      'UseCachingFetch has not been implemented, please read the instructions in DevTask.md',
-    ),
-  };
+    error: null,
+  });
+
+  React.useEffect(() => {
+    const fetchData = async (url: string) => {
+      const response = await fetch(url);
+      if (!response.ok) throw new Error('Network response was not ok');
+      return response.json();
+    };
+    
+    fetchData(url)
+      .then((data) => {
+        cache.set(url, { data });
+        setState({ isLoading: false, data, error: null });
+      })
+      .catch((error) => {
+        cache.set(url, { error });
+        setState({ isLoading: false, data: null, error: error as Error });
+      });
+
+  }, [url]);
+
+  return state as { isLoading: boolean; data: unknown; error: Error | null };
 };
 
 /**
@@ -52,10 +79,19 @@ export const useCachingFetch: UseCachingFetch = (url) => {
  * 3. This file passes a type-check.
  *
  */
+
 export const preloadCachingFetch = async (url: string): Promise<void> => {
-  throw new Error(
-    'preloadCachingFetch has not been implemented, please read the instructions in DevTask.md',
-  );
+  if (cache.has(url)) return;
+
+  try {
+    const response = await fetch(url);
+    const data = await response.json();
+    cache.set(url, { data });
+    
+  } 
+  catch (error) {
+    cache.set(url, { error: error as Error });
+  }
 };
 
 /**
@@ -74,8 +110,26 @@ export const preloadCachingFetch = async (url: string): Promise<void> => {
  * 4. This file passes a type-check.
  *
  */
-export const serializeCache = (): string => '';
+export const serializeCache = (): string => {
+  try {
+    return JSON.stringify(cache); 
+  } catch (error) {
+    console.error('Failed to serialize cache:', error);
+    return '';
+  }
+};
 
-export const initializeCache = (serializedCache: string): void => {};
+export const initializeCache = (serializedCache: string): void => {
+  const obj = JSON.parse(serializedCache) as Record<string, any>;
 
-export const wipeCache = (): void => {};
+  Object.entries(obj).forEach(([url, entry]) => {
+    cache.set(url, {
+      data: entry.data,
+      error: entry.error && new Error(entry.error),
+    });
+  });
+};
+
+export const wipeCache = (): void => {
+  cache.clear();
+};
