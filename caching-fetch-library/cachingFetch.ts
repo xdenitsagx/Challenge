@@ -15,6 +15,7 @@ type UseCachingFetch = (url: string) => {
  * - data: the data returned from the fetch, or null if the fetch has not completed
  * - error: an error object if the fetch fails, or null if the fetch is successful
  *
+ * 
  * This hook is called three times on the client:
  *  - 1 in App.tsx
  *  - 2 in Person.tsx
