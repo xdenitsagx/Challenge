@@ -43,13 +43,13 @@ export const useCachingFetch: UseCachingFetch = (url) => {
     error: null,
   });
 
+  const fetchData = async (url: string) => {
+    const response = await fetch(url);
+    if (!response.ok) throw new Error('Network response was not ok');
+    return response.json();
+  };
+
   React.useEffect(() => {
-    const fetchData = async (url: string) => {
-      const response = await fetch(url);
-      if (!response.ok) throw new Error('Network response was not ok');
-      return response.json();
-    };
-    
     fetchData(url)
       .then((data) => {
         cache.set(url, { data });
@@ -62,8 +62,8 @@ export const useCachingFetch: UseCachingFetch = (url) => {
 
   }, [url]);
 
-  return state as { isLoading: boolean; data: unknown; error: Error | null };
-};
+  return state 
+};    
 
 /**
  * 2. Implement a preloading caching fetch function. The function should fetch the data.
@@ -110,6 +110,7 @@ export const preloadCachingFetch = async (url: string): Promise<void> => {
  * 4. This file passes a type-check.
  *
  */
+
 export const serializeCache = (): string => {
   try {
     return JSON.stringify(cache); 
